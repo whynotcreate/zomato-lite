@@ -13,6 +13,14 @@ type ReviewRow = {
   createdAt: Date;
 };
 
+// The shape the database actually gives us (snake_case column names).
+type RawReviewRow = {
+  id: number;
+  rating: number;
+  comment: string;
+  created_at: Date;
+};
+
 export async function GET(
   _request: Request,
   { params }: { params: Promise<{ id: string }> },
@@ -34,14 +42,12 @@ export async function GET(
   }
 
   // Every review for this restaurant, newest first.
-  const rows = (
-    await sql`
+  const rows = ((await sql`
       SELECT id, rating, comment, created_at
       FROM reviews
       WHERE restaurant_id = ${restaurantId}
       ORDER BY created_at DESC
-    `
-  ).map((r: { id: number; rating: number; comment: string; created_at: Date }): ReviewRow => ({
+    `) as unknown as RawReviewRow[]).map((r): ReviewRow => ({
     id: r.id,
     rating: r.rating,
     comment: r.comment,
