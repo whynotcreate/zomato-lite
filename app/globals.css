@@ -29,6 +29,7 @@
 body {
   background: var(--background);
   color: var(--foreground);
+  font-family: var(--font-geist-sans), ui-sans-serif, system-ui, -apple-system, sans-serif;
 }
 
 /* --- Motion: one shared vocabulary for the whole app ---------------------- */
@@ -104,12 +105,52 @@ body {
   animation: shake 0.28s ease-in-out;
 }
 
+/* Kenburns: the hero photo settles from a slight zoom. */
+@keyframes kenburns {
+  from {
+    transform: scale(1.08);
+  }
+  to {
+    transform: scale(1);
+  }
+}
+
+.kenburns {
+  animation: kenburns 1.4s cubic-bezier(0.22, 0.9, 0.36, 1) both;
+}
+
+/* Card-lift: desktop hover affordance for review cards. */
+.card-lift {
+  transition:
+    transform 0.18s cubic-bezier(0.22, 0.9, 0.36, 1),
+    box-shadow 0.18s cubic-bezier(0.22, 0.9, 0.36, 1);
+}
+
+.card-lift:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 2px 4px rgba(28, 27, 26, 0.05), 0 10px 24px rgba(28, 27, 26, 0.08);
+}
+
+/* Spin: submit-button spinner. */
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.spin {
+  animation: spin 0.7s linear infinite;
+}
+
 /* Respect users who opt out of motion. */
 @media (prefers-reduced-motion: reduce) {
   .rise,
   .pop,
   .draw-line,
-  .shake {
+  .shake,
+  .kenburns,
+  .spin,
+  .card-lift {
     animation: none;
     opacity: 1;
     transform: none;

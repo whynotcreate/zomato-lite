@@ -36,6 +36,7 @@ export default function ReviewPage({
   const [notFound, setNotFound] = useState(false);
 
   const [rating, setRating] = useState(0);
+  const [hover, setHover] = useState(0); // show which stars you're about to pick
   const [comment, setComment] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [errorKey, setErrorKey] = useState(0); // re-triggers the shake on repeat errors
@@ -50,6 +51,7 @@ export default function ReviewPage({
   }, [restaurantId]);
 
   const canSubmit = rating >= 1 && comment.trim().length > 0 && !submitting;
+  const shown = hover || rating; // hover preview wins while the cursor is over a star
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -112,14 +114,16 @@ export default function ReviewPage({
                   role="radio"
                   aria-checked={star === rating}
                   aria-label={`${star} star${star > 1 ? "s" : ""}`}
+                  onMouseEnter={() => setHover(star)}
+                  onMouseLeave={() => setHover(0)}
                   onClick={() => setRating(star)}
                   className={`grid h-16 place-items-center rounded-xl border bg-white transition-all duration-150 hover:border-brand/40 hover:bg-[#fdf1f1] active:scale-90 ${
-                    star <= rating
+                    star <= shown
                       ? "border-brand/60 shadow-sm"
                       : "border-line"
                   }`}
                 >
-                  <Star filled={star <= rating} />
+                  <Star filled={star <= shown} />
                 </button>
               ))}
             </div>
@@ -134,7 +138,11 @@ export default function ReviewPage({
               placeholder="How was the food, the service, the vibe?"
               className="mt-3 h-44 w-full resize-none rounded-xl border border-line bg-white px-4 py-3.5 text-[15px] leading-snug transition-colors placeholder:text-[#b3b0ac] focus:border-brand/60 focus:outline-none"
             />
-            <div className="mt-1.5 text-right text-xs text-muted">
+            <div
+              className={`mt-1.5 text-right text-xs transition-colors ${
+                comment.length >= MAX_COMMENT - 50 ? "text-brand" : "text-muted"
+              }`}
+            >
               {comment.length}/{MAX_COMMENT}
             </div>
 
@@ -151,8 +159,14 @@ export default function ReviewPage({
             <button
               type="submit"
               disabled={!canSubmit}
-              className="mt-8 w-full rounded-xl py-3.5 text-[15px] font-bold transition-all duration-150 active:scale-[0.99] disabled:cursor-not-allowed disabled:bg-[#e4e2df] disabled:text-[#a8a5a1] enabled:bg-brand enabled:text-white enabled:hover:bg-brand-press"
+              className="mt-8 flex w-full items-center justify-center gap-2 rounded-xl py-3.5 text-[15px] font-bold transition-all duration-150 active:scale-[0.99] disabled:cursor-not-allowed disabled:bg-[#e4e2df] disabled:text-[#a8a5a1] enabled:bg-brand enabled:text-white enabled:hover:bg-brand-press"
             >
+              {submitting && (
+                <svg className="spin h-4 w-4" viewBox="0 0 24 24" fill="none" aria-hidden>
+                  <circle cx="12" cy="12" r="9" stroke="currentColor" strokeOpacity="0.25" strokeWidth="3" />
+                  <path d="M21 12a9 9 0 0 0-9-9" stroke="currentColor" strokeWidth="3" strokeLinecap="round" />
+                </svg>
+              )}
               {submitting ? "Submitting…" : "Submit Review"}
             </button>
           </form>

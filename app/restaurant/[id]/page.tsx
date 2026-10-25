@@ -8,9 +8,11 @@
 
 import { use, useEffect, useState } from "react";
 import Link from "next/link";
+import Image from "next/image";
 import Navbar from "@/app/components/Navbar";
 import RatingChip from "@/app/components/RatingChip";
 import TimeAgo from "@/app/components/TimeAgo";
+import hero from "../../../public/hero.jpg";
 
 type Review = {
   id: number;
@@ -33,6 +35,25 @@ type RestaurantPageData = {
 function initials(name: string): string {
   const parts = name.trim().split(/\s+/);
   return ((parts[0]?.[0] ?? "") + (parts[1]?.[0] ?? "")).toUpperCase() || "•";
+}
+
+// Loading state: a quiet skeleton in the shape of the real page,
+// so the content swaps in without the page jumping.
+function Skeleton() {
+  return (
+    <div className="animate-pulse" aria-label="Loading">
+      <div className="h-40 rounded-2xl bg-[#e8e7e4]" />
+      <div className="mt-4 space-y-2 px-2">
+        <div className="h-6 w-2/3 rounded bg-[#e8e7e4]" />
+        <div className="h-4 w-1/3 rounded bg-[#e8e7e4]" />
+        <div className="h-4 w-1/2 rounded bg-[#e8e7e4]" />
+      </div>
+      <div className="mt-8 h-40 rounded-xl bg-white" />
+      <div className="mt-6 mb-3 h-3 w-40 rounded bg-[#e8e7e4]" />
+      <div className="mt-2 h-24 rounded-xl bg-white" />
+      <div className="mt-3 h-24 rounded-xl bg-white" />
+    </div>
+  );
 }
 
 export default function RestaurantPage({
@@ -65,10 +86,8 @@ export default function RestaurantPage({
           </div>
         </div>
       ) : !data ? (
-        <div className="mx-auto mt-10 max-w-xl px-5">
-          <div className="h-1.5 w-40 overflow-hidden rounded-full bg-[#e8e7e4]">
-            <div className="loading-line h-full w-1/3 rounded-full bg-brand" />
-          </div>
+        <div className="mx-auto max-w-xl px-5 pt-5">
+          <Skeleton />
         </div>
       ) : (
         <div className="mx-auto max-w-xl px-5 pb-32">
@@ -77,24 +96,35 @@ export default function RestaurantPage({
             className="rise mt-5 overflow-hidden rounded-2xl bg-white shadow-card"
             style={{ animationDelay: "0ms" }}
           >
-            {/* Red banner with the dotted texture and the initials */}
-            <div
-              className="flex h-36 items-end p-5"
-              style={{
-                background:
-                  "radial-gradient(rgba(255,255,255,0.22) 1.5px, transparent 1.5px) 0 0/16px 16px, var(--brand)",
-              }}
-            >
-              <span className="text-4xl font-extrabold text-white">{initials(data.name)}</span>
+            {/* Hero photo with a warm bottom gradient so the initials read clearly */}
+            <div className="relative h-40">
+              <Image
+                src={hero}
+                alt=""
+                fill
+                priority
+                sizes="(max-width: 640px) 100vw, 576px"
+                className="kenburns object-cover"
+              />
+              <div
+                className="absolute inset-0"
+                style={{
+                  background:
+                    "linear-gradient(to top, rgba(28,27,26,0.55), rgba(28,27,26,0.05) 55%), linear-gradient(120deg, rgba(224,82,82,0.28), rgba(224,82,82,0) 60%)",
+                }}
+              />
+              <span className="absolute bottom-4 left-5 text-4xl font-extrabold text-white drop-shadow-md">
+                {initials(data.name)}
+              </span>
             </div>
 
-            {/* Name, tags, review count — and the rating badge overlapping the banner */}
-            <div className="flex items-start gap-4 p-5 pt-3">
+            {/* Name, tags, review count — and the rating badge straddling the boundary */}
+            <div className="flex items-start gap-4 px-5 pb-5 pt-3.5">
               <div className="min-w-0 flex-1">
                 <h1 className="text-[22px] font-extrabold leading-tight">{data.name}</h1>
                 <p className="mt-0.5 text-sm text-muted">{data.area}</p>
                 <div className="mt-3 flex flex-wrap gap-2">
-                  <span className="rounded-full bg-[#f2f2ef] px-3 py-1 text-xs font-semibold text-[#55524e]">
+                  <span className="rounded-full bg-[#fdecec] px-3 py-1 text-xs font-semibold text-brand">
                     {data.cuisine}
                   </span>
                   <span className="rounded-full bg-[#f2f2ef] px-3 py-1 text-xs font-semibold text-[#55524e]">
@@ -108,13 +138,19 @@ export default function RestaurantPage({
 
               {/* This prints the API's computed number — it calculates nothing.
                   With no reviews there is nothing to print, so it shows "New". */}
-              <div className="pop -mt-14 grid h-[72px] w-[72px] shrink-0 place-items-center rounded-2xl bg-brand text-white shadow-lg shadow-brand/30"
+              <div
+                className="pop -mt-14 grid h-[76px] w-[76px] shrink-0 place-items-center rounded-2xl bg-brand text-white ring-4 ring-white transition-transform duration-200 hover:scale-105"
                 style={{ animationDelay: "150ms" }}
               >
                 {data.averageRating !== null ? (
                   <div className="text-center leading-none">
-                    <div className="text-[20px] font-extrabold">{data.averageRating}</div>
-                    <div className="mt-1 text-[11px] font-semibold opacity-80">
+                    <div className="text-[22px] font-extrabold tracking-tight">
+                      {data.averageRating}
+                    </div>
+                    <div className="mt-1 flex items-center justify-center gap-0.5 text-[11px] font-semibold opacity-90">
+                      <svg viewBox="0 0 24 24" fill="currentColor" className="h-2.5 w-2.5" aria-hidden>
+                        <path d="M12 17.6 6.4 20.5l1.1-6.2-4.5-4.4 6.2-.9L12 2.9l2.8 6.1 6.2.9-4.5 4.4 1.1 6.2z" />
+                      </svg>
                       {data.totalReviews}
                     </div>
                   </div>
@@ -135,7 +171,7 @@ export default function RestaurantPage({
                 Latest review
               </h2>
               <article
-                className="rise relative rounded-r-xl border-l-[3px] border-brand bg-white p-4 pt-5 shadow-card"
+                className="rise card-lift relative rounded-r-xl rounded-l-sm border-l-[3px] border-brand bg-white p-4 pt-5 shadow-card"
                 style={{ animationDelay: "140ms" }}
               >
                 {/* the animated accent line, drawing down the left edge */}
@@ -171,7 +207,7 @@ export default function RestaurantPage({
                 {data.reviews.map((review, i) => (
                   <li
                     key={review.id}
-                    className="rise rounded-xl bg-white p-4 shadow-card"
+                    className="rise card-lift rounded-xl bg-white p-4 shadow-card"
                     style={{ animationDelay: `${260 + i * 45}ms` }}
                   >
                     <div className="flex items-center gap-3">
@@ -191,7 +227,7 @@ export default function RestaurantPage({
               className="rise mt-7 rounded-2xl bg-white p-10 text-center shadow-card"
               style={{ animationDelay: "100ms" }}
             >
-              <p className="text-3xl" aria-hidden> ☆ </p>
+              <p className="text-3xl" aria-hidden>☆</p>
               <p className="mt-3 font-bold">No reviews yet.</p>
               <p className="mt-1 text-sm text-muted">Be the first to say what you thought.</p>
             </div>
@@ -201,7 +237,10 @@ export default function RestaurantPage({
 
       {/* --- Fixed bottom action bar ------------------------------------------------ */}
       <div className="fixed inset-x-0 bottom-0 z-40 border-t border-line bg-white/95 backdrop-blur">
-        <div className="mx-auto max-w-xl px-5 pb-4 pt-3">
+        <div
+          className="mx-auto max-w-xl px-5 pt-3"
+          style={{ paddingBottom: "max(1rem, env(safe-area-inset-bottom))" }}
+        >
           <Link
             href={`/review/${id}`}
             className="block w-full rounded-xl bg-brand py-3.5 text-center text-[15px] font-bold text-white transition-all hover:bg-brand-press active:scale-[0.99]"
