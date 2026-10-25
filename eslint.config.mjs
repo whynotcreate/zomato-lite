@@ -19,6 +19,7 @@ const eslintConfig = [
       "build/**",
       "next-env.d.ts",
       "scripts/**",
+      "zomato-lite/**", // the accidental duplicated scaffold; not part of this app
     ],
   },
 ];

@@ -1,23 +1,117 @@
 @import "tailwindcss";
 
 :root {
-  --background: #faf9f5; /* off-white, warm */
-  --foreground: #1b1917; /* near-black, warm */
-  --muted: #8a8378; /* muted warm grey for secondary text */
-  --accent: #c2410c; /* one warm accent, used sparingly */
-  --line: #e7e2d9; /* hairline borders */
+  --background: #f3f4f1; /* soft grey-green page */
+  --foreground: #1c1b1a;
+  --muted: #8f8d8a;
+  --line: #e8e7e4;
+  --brand: #e05252; /* the one red, used for identity + actions */
+  --brand-press: #c94848;
+  --good: #4c8a57; /* ratings 4–5 */
+  --meh: #e0a13c; /* ratings 2–3 */
+  --bad: #de4f4f; /* rating 1 */
 }
 
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
   --color-muted: var(--muted);
-  --color-accent: var(--accent);
+  --color-brand: var(--brand);
+  --color-brand-press: var(--brand-press);
+  --color-good: var(--good);
+  --color-meh: var(--meh);
+  --color-bad: var(--bad);
   --color-line: var(--line);
+  --shadow-card: 0 1px 2px rgba(28, 27, 26, 0.04), 0 6px 16px rgba(28, 27, 26, 0.05);
   --font-sans: var(--font-geist-sans);
 }
 
 body {
   background: var(--background);
   color: var(--foreground);
+}
+
+/* --- Motion: one shared vocabulary for the whole app ---------------------- */
+
+/* Line-rise: content enters by sliding up along the page's axis. */
+@keyframes line-rise {
+  from {
+    opacity: 0;
+    transform: translateY(14px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.rise {
+  opacity: 0;
+  animation: line-rise 0.55s cubic-bezier(0.22, 0.9, 0.36, 1) forwards;
+}
+
+/* Chip-pop: rating chips land with a small overshoot. */
+@keyframes chip-pop {
+  0% {
+    opacity: 0;
+    transform: scale(0.4);
+  }
+  70% {
+    opacity: 1;
+    transform: scale(1.12);
+  }
+  100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+.pop {
+  opacity: 0;
+  animation: chip-pop 0.45s cubic-bezier(0.22, 0.9, 0.36, 1) forwards;
+}
+
+/* Draw-line: the latest review's accent line draws itself downward. */
+@keyframes draw-line {
+  from {
+    transform: scaleY(0);
+  }
+  to {
+    transform: scaleY(1);
+  }
+}
+
+.draw-line {
+  transform-origin: top;
+  animation: draw-line 0.5s cubic-bezier(0.22, 0.9, 0.36, 1) 0.25s both;
+}
+
+/* Shake: used when the backend rejects a submission. */
+@keyframes shake {
+  0%,
+  100% {
+    transform: translateX(0);
+  }
+  25% {
+    transform: translateX(-5px);
+  }
+  75% {
+    transform: translateX(5px);
+  }
+}
+
+.shake {
+  animation: shake 0.28s ease-in-out;
+}
+
+/* Respect users who opt out of motion. */
+@media (prefers-reduced-motion: reduce) {
+  .rise,
+  .pop,
+  .draw-line,
+  .shake {
+    animation: none;
+    opacity: 1;
+    transform: none;
+  }
 }

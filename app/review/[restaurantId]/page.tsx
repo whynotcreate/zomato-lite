@@ -7,6 +7,22 @@
 
 import { use, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
+import Navbar from "@/app/components/Navbar";
+
+const MAX_COMMENT = 500;
+
+function Star({ filled }: { filled: boolean }) {
+  return (
+    <svg
+      viewBox="0 0 24 24"
+      className="h-7 w-7 transition-colors duration-150"
+      fill={filled ? "var(--brand)" : "#cfccc8"}
+      aria-hidden
+    >
+      <path d="M12 17.6 6.4 20.5l1.1-6.2-4.5-4.4 6.2-.9L12 2.9l2.8 6.1 6.2.9-4.5 4.4 1.1 6.2z" />
+    </svg>
+  );
+}
 
 export default function ReviewPage({
   params,
@@ -22,6 +38,7 @@ export default function ReviewPage({
   const [rating, setRating] = useState(0);
   const [comment, setComment] = useState("");
   const [error, setError] = useState<string | null>(null);
+  const [errorKey, setErrorKey] = useState(0); // re-triggers the shake on repeat errors
   const [submitting, setSubmitting] = useState(false);
 
   // Load the restaurant name so the reviewer knows what they are reviewing.
@@ -50,8 +67,9 @@ export default function ReviewPage({
       });
       if (!res.ok) {
         const body = await res.json();
-        // Show the backend's error message verbatim.
+        // Show the backend's error message verbatim, and shake to say so.
         setError(body.error ?? "Something went wrong.");
+        setErrorKey((k) => k + 1);
         setSubmitting(false);
         return;
       }
@@ -59,69 +77,91 @@ export default function ReviewPage({
       router.push(`/restaurant/${restaurantId}`);
     } catch {
       setError("Could not reach the server.");
+      setErrorKey((k) => k + 1);
       setSubmitting(false);
     }
   }
 
-  if (notFound) {
-    return (
-      <main className="min-h-screen grid place-items-center px-6">
-        <p className="text-muted">This restaurant does not exist.</p>
-      </main>
-    );
-  }
-
   return (
-    <main className="mx-auto max-w-[560px] px-5 py-14">
-      <h1 className="text-2xl">{name ?? "…"}</h1>
-      <p className="mt-1 text-sm text-muted">Write a review</p>
+    <main className="min-h-screen">
+      <Navbar />
 
-      <form onSubmit={handleSubmit} className="mt-10">
-        <label className="block text-sm text-muted">Your rating</label>
-        <div className="mt-3 flex gap-2">
-          {[1, 2, 3, 4, 5].map((star) => (
+      <div className="mx-auto max-w-xl px-5 pb-16 pt-6">
+        {notFound ? (
+          <div className="rise rounded-2xl bg-white p-10 text-center shadow-card">
+            <p className="font-bold">This restaurant does not exist.</p>
+          </div>
+        ) : (
+          <form
+            onSubmit={handleSubmit}
+            className="rise rounded-2xl bg-white p-6 shadow-card sm:p-8"
+          >
+            <h2 className="text-[11px] font-bold uppercase tracking-[0.15em] text-muted">
+              Writing a review for
+            </h2>
+            <h1 className="mt-2 text-[26px] font-extrabold leading-tight">
+              {name ?? "…"}
+            </h1>
+
+            <h3 className="mt-8 text-[15px] font-bold">Rate it</h3>
+            <div className="mt-3 grid grid-cols-5 gap-2.5" role="radiogroup" aria-label="Rating">
+              {[1, 2, 3, 4, 5].map((star) => (
+                <button
+                  key={star}
+                  type="button"
+                  role="radio"
+                  aria-checked={star === rating}
+                  aria-label={`${star} star${star > 1 ? "s" : ""}`}
+                  onClick={() => setRating(star)}
+                  className={`grid h-16 place-items-center rounded-xl border bg-white transition-all duration-150 hover:border-brand/40 hover:bg-[#fdf1f1] active:scale-90 ${
+                    star <= rating
+                      ? "border-brand/60 shadow-sm"
+                      : "border-line"
+                  }`}
+                >
+                  <Star filled={star <= rating} />
+                </button>
+              ))}
+            </div>
+
+            <h3 className="mt-8 text-[15px] font-bold">Your review</h3>
+            <textarea
+              id="comment"
+              value={comment}
+              maxLength={MAX_COMMENT}
+              onChange={(e) => setComment(e.target.value)}
+              rows={6}
+              placeholder="How was the food, the service, the vibe?"
+              className="mt-3 h-44 w-full resize-none rounded-xl border border-line bg-white px-4 py-3.5 text-[15px] leading-snug transition-colors placeholder:text-[#b3b0ac] focus:border-brand/60 focus:outline-none"
+            />
+            <div className="mt-1.5 text-right text-xs text-muted">
+              {comment.length}/{MAX_COMMENT}
+            </div>
+
+            {error && (
+              <p
+                key={errorKey}
+                role="alert"
+                className="shake mt-4 rounded-lg bg-[#fdf1f1] px-3 py-2 text-sm font-medium text-brand"
+              >
+                {error}
+              </p>
+            )}
+
             <button
-              key={star}
-              type="button"
-              aria-label={`${star} star${star > 1 ? "s" : ""}`}
-              onClick={() => setRating(star)}
-              className={`h-11 w-11 rounded-full border text-sm ${
-                star <= rating
-                  ? "border-accent bg-accent text-background"
-                  : "border-line text-foreground"
-              }`}
+              type="submit"
+              disabled={!canSubmit}
+              className="mt-8 w-full rounded-xl py-3.5 text-[15px] font-bold transition-all duration-150 active:scale-[0.99] disabled:cursor-not-allowed disabled:bg-[#e4e2df] disabled:text-[#a8a5a1] enabled:bg-brand enabled:text-white enabled:hover:bg-brand-press"
             >
-              {star}
+              {submitting ? "Submitting…" : "Submit Review"}
             </button>
-          ))}
-        </div>
-
-        <label htmlFor="comment" className="mt-8 block text-sm text-muted">
-          Your comment
-        </label>
-        <textarea
-          id="comment"
-          value={comment}
-          onChange={(e) => setComment(e.target.value)}
-          rows={4}
-          placeholder="What did you think?"
-          className="mt-3 w-full rounded-md border border-line bg-transparent px-3 py-2 text-base resize-none focus:outline-none focus:border-accent"
-        />
-
-        {error && (
-          <p role="alert" className="mt-4 text-sm text-accent">
-            {error}
-          </p>
+          </form>
         )}
 
-        <button
-          type="submit"
-          disabled={!canSubmit}
-          className="mt-8 w-full rounded-md bg-foreground py-3 text-base text-background disabled:opacity-30"
-        >
-          {submitting ? "Sending…" : "Submit review"}
-        </button>
-      </form>
+        <p className="rise mt-6 text-center text-sm text-muted" style={{ animationDelay: "120ms" }}>
+          Your review is public and cannot be edited or deleted.
+        </p>
+      </div>
     </main>
   );
 }
